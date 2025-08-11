@@ -1,5 +1,6 @@
 from collections import UserDict
 from datetime import datetime, date, timedelta
+import pickle
 
 class Field:
     def __init__(self, value):
@@ -62,6 +63,14 @@ class Record:
         self.name = Name(name)
         self.phones = []
         self.birthday = None
+
+    def __getstate__(self):
+        state = self.__dict__
+        return state
+    
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        self.is_active = False 
     
     def add_phone(self, phone):
         phone_obj = Phone(phone)
@@ -109,6 +118,14 @@ class AddressBook(UserDict):
             birthday = record.birthday.value if record.birthday else "N/A"
             result.append(f"{key}: {record}. Birthdate: {birthday}")
         return '\n'.join(result)
+    
+    def __getstate__(self):
+        state = self.__dict__
+        return state
+    
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        self.is_active = False 
 
     def add_record(self, record):
         self.data[record.name.value] = record
@@ -242,8 +259,19 @@ def add_contact(args, book: AddressBook):
         record.add_phone(phone)
     return message
 
+def save_data(book, filename="addressbook.pkl"):
+    with open(filename, "wb") as f:
+        pickle.dump(book, f)
+
+def load_data(filename="addressbook.pkl"):
+    try:
+        with open(filename, "rb") as f:
+            return pickle.load(f)
+    except FileNotFoundError:
+        return AddressBook()
+
 def main():
-    book = AddressBook()
+    book = load_data()
     """
     ivan_record = Record("Ivan")
     ivan_record.add_phone("1234567890")
@@ -290,6 +318,8 @@ def main():
 
         else:
             print("Invalid command.")
+    
+    save_data(book)
 
 """
 
@@ -305,6 +335,9 @@ phone Ivan
 add jane 9876543210
 add-birthday jane 01.01.1990
 show-birthday jane
+
+add Mary 9876543222
+add-birthday Mary 01.01.1996
 
 birthdays
 
